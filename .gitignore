@@ -1,0 +1,16 @@
+# Secrets / local config
+.env
+.env.*
+!.env.example
+.claude/settings.local.json
+
+# Generated outputs (uncomment if you don't want these committed)
+# security/*.html
+# test-cases/_reviews/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp

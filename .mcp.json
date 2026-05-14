@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "node",
+      "args": [
+        "C:/Users/igor.seleznov/AppData/Roaming/npm/node_modules/@playwright/mcp/cli.js"
+      ],
+      "env": {
+        "NODE_PATH": "C:/Users/igor.seleznov/AppData/Roaming/npm/node_modules/@playwright/mcp/node_modules"
+      }
+    }
+  }
+}

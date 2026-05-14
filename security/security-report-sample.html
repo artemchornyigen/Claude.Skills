@@ -1,0 +1,971 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Security Report — Acme Orders API — 2026-05-12 14:30</title>
+<style>
+  /* ===== Design tokens ===== */
+  :root {
+    --bg:         #f7f8fb;
+    --bg-elev:   #ffffff;
+    --bg-soft:   #f1f3f8;
+    --border:    #e4e7ee;
+    --border-strong: #cdd2dc;
+    --text:      #1a1d24;
+    --text-soft: #545968;
+    --text-mute: #8a90a0;
+    --accent:    #4f46e5;
+    --accent-soft: #eef2ff;
+    --code-bg:   #1a1d24;
+    --code-text: #e5e7eb;
+    --code-keyword: #c084fc;
+    --code-string:  #86efac;
+    --code-comment: #6b7280;
+
+    --sev-critical: #dc2626;
+    --sev-critical-bg: #fee2e2;
+    --sev-high:     #ea580c;
+    --sev-high-bg:  #ffedd5;
+    --sev-medium:   #d97706;
+    --sev-medium-bg: #fef3c7;
+    --sev-low:      #0284c7;
+    --sev-low-bg:   #e0f2fe;
+    --sev-info:     #64748b;
+    --sev-info-bg:  #f1f5f9;
+
+    --grade-A: #16a34a;
+    --grade-B: #65a30d;
+    --grade-C: #d97706;
+    --grade-D: #ea580c;
+    --grade-F: #dc2626;
+
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow-sm: 0 1px 2px rgba(15,23,42,.05);
+    --shadow:    0 4px 16px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
+    --shadow-lg: 0 12px 32px rgba(15,23,42,.10), 0 2px 6px rgba(15,23,42,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:        #0b0d12;
+      --bg-elev:   #14171f;
+      --bg-soft:   #1a1e28;
+      --border:    #252a36;
+      --border-strong: #353c4c;
+      --text:      #e7e9ef;
+      --text-soft: #aab0c0;
+      --text-mute: #6f7689;
+      --accent:    #818cf8;
+      --accent-soft: #1e1b4b;
+      --code-bg:   #0a0c11;
+      --code-text: #e5e7eb;
+
+      --sev-critical-bg: #2a0e0e;
+      --sev-high-bg:    #2a160a;
+      --sev-medium-bg:  #2a1f0a;
+      --sev-low-bg:     #0a1f2a;
+      --sev-info-bg:    #181b22;
+
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
+      --shadow:    0 4px 16px rgba(0,0,0,.45), 0 1px 2px rgba(0,0,0,.3);
+      --shadow-lg: 0 12px 32px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.4);
+    }
+  }
+  [data-theme="light"] {
+    color-scheme: light;
+    --bg: #f7f8fb; --bg-elev: #ffffff; --bg-soft: #f1f3f8; --border: #e4e7ee; --border-strong: #cdd2dc;
+    --text: #1a1d24; --text-soft: #545968; --text-mute: #8a90a0; --accent: #4f46e5; --accent-soft: #eef2ff;
+    --code-bg: #1a1d24; --code-text: #e5e7eb;
+    --sev-critical-bg: #fee2e2; --sev-high-bg: #ffedd5; --sev-medium-bg: #fef3c7; --sev-low-bg: #e0f2fe; --sev-info-bg: #f1f5f9;
+  }
+  [data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0b0d12; --bg-elev: #14171f; --bg-soft: #1a1e28; --border: #252a36; --border-strong: #353c4c;
+    --text: #e7e9ef; --text-soft: #aab0c0; --text-mute: #6f7689; --accent: #818cf8; --accent-soft: #1e1b4b;
+    --code-bg: #0a0c11; --code-text: #e5e7eb;
+    --sev-critical-bg: #2a0e0e; --sev-high-bg: #2a160a; --sev-medium-bg: #2a1f0a; --sev-low-bg: #0a1f2a; --sev-info-bg: #181b22;
+  }
+
+  /* ===== Reset & base ===== */
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code, pre, .mono { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; }
+  .container { max-width: 1180px; margin: 0 auto; padding: 0 1.75rem; }
+
+  /* ===== Header / hero ===== */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    background: color-mix(in srgb, var(--bg-elev) 92%, transparent);
+    backdrop-filter: saturate(180%) blur(10px);
+    -webkit-backdrop-filter: saturate(180%) blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar-inner {
+    display: flex; align-items: center; gap: 1rem;
+    padding: .75rem 1.75rem;
+    max-width: 1180px; margin: 0 auto;
+  }
+  .logo {
+    display: inline-flex; align-items: center; gap: .5rem;
+    font-weight: 700; letter-spacing: -.01em; color: var(--text);
+  }
+  .logo-mark {
+    width: 26px; height: 26px;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--accent), #a855f7);
+    border-radius: 7px;
+    color: white;
+  }
+  .topbar-meta { color: var(--text-mute); font-size: 13px; margin-left: auto; }
+  .theme-toggle {
+    background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-soft);
+    padding: .35rem .65rem; border-radius: var(--radius-sm); font-size: 13px; cursor: pointer;
+  }
+  .theme-toggle:hover { color: var(--text); border-color: var(--border-strong); }
+
+  .hero {
+    padding: 2.5rem 0 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero h1 {
+    font-size: clamp(1.6rem, 2.5vw + .5rem, 2.4rem);
+    line-height: 1.15; margin: 0 0 .6rem; letter-spacing: -.025em; font-weight: 700;
+  }
+  .hero .subtitle { color: var(--text-soft); font-size: 1rem; margin: 0; }
+  .hero-grid {
+    margin-top: 1.6rem;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: .9rem;
+  }
+  .meta-card {
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: .9rem 1.1rem; box-shadow: var(--shadow-sm);
+  }
+  .meta-card .label {
+    text-transform: uppercase; letter-spacing: .08em; font-size: 11px;
+    color: var(--text-mute); font-weight: 600;
+  }
+  .meta-card .value { margin-top: .25rem; font-size: 14px; color: var(--text); word-break: break-word; }
+  .meta-card .value.mono { font-size: 13px; }
+
+  /* ===== Posture grade ===== */
+  .posture {
+    display: inline-flex; align-items: center; gap: .8rem;
+    padding: .4rem .9rem .4rem .55rem;
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: 999px;
+    box-shadow: var(--shadow-sm);
+    margin-top: 1.1rem;
+    font-size: 14px;
+  }
+  .grade-pill {
+    width: 34px; height: 34px; border-radius: 999px;
+    display: grid; place-items: center; color: white; font-weight: 700; font-size: 16px;
+  }
+  .grade-A { background: var(--grade-A); }
+  .grade-B { background: var(--grade-B); }
+  .grade-C { background: var(--grade-C); }
+  .grade-D { background: var(--grade-D); }
+  .grade-F { background: var(--grade-F); }
+  .posture .grade-label { color: var(--text-soft); }
+
+  /* ===== Section ===== */
+  section { padding: 2.4rem 0; border-bottom: 1px solid var(--border); }
+  section:last-of-type { border-bottom: 0; }
+  h2 {
+    font-size: 1.4rem; margin: 0 0 .3rem; letter-spacing: -.015em; font-weight: 700;
+  }
+  h2 .h2-count {
+    margin-left: .5rem; font-size: .85rem; color: var(--text-mute); font-weight: 500;
+  }
+  .section-intro { color: var(--text-soft); margin: 0 0 1.4rem; max-width: 70ch; }
+
+  /* ===== Risk overview cards ===== */
+  .stat-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem;
+  }
+  .stat {
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1.2rem 1.25rem 1.05rem; box-shadow: var(--shadow-sm);
+    position: relative; overflow: hidden;
+  }
+  .stat::before {
+    content: ""; position: absolute; inset: 0 auto 0 0; width: 4px;
+    background: var(--accent);
+  }
+  .stat.crit::before { background: var(--sev-critical); }
+  .stat.high::before { background: var(--sev-high); }
+  .stat.med::before  { background: var(--sev-medium); }
+  .stat.low::before  { background: var(--sev-low); }
+  .stat.info::before { background: var(--sev-info); }
+  .stat-label {
+    text-transform: uppercase; letter-spacing: .08em; font-size: 11px; font-weight: 600; color: var(--text-mute);
+  }
+  .stat-value { font-size: 2.1rem; line-height: 1.05; font-weight: 700; margin-top: .25rem; }
+  .stat-sub { color: var(--text-mute); font-size: 12px; margin-top: .2rem; }
+
+  /* ===== Executive summary panel ===== */
+  .exec {
+    background: linear-gradient(180deg, var(--accent-soft), transparent 70%), var(--bg-elev);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1.5rem 1.6rem; box-shadow: var(--shadow);
+  }
+  .exec p { margin: 0; font-size: 1.02rem; line-height: 1.65; color: var(--text); }
+
+  /* ===== Filter bar ===== */
+  .filterbar {
+    display: flex; flex-wrap: wrap; gap: .5rem .6rem; align-items: center;
+    margin-bottom: 1.2rem;
+  }
+  .chip {
+    appearance: none; background: var(--bg-elev); border: 1px solid var(--border);
+    border-radius: 999px; padding: .35rem .85rem; font-size: 13px; color: var(--text-soft);
+    cursor: pointer; transition: all .15s ease;
+    font-weight: 500;
+  }
+  .chip:hover { color: var(--text); border-color: var(--border-strong); }
+  .chip.active { background: var(--accent); border-color: var(--accent); color: white; }
+  .chip[data-sev="critical"].active { background: var(--sev-critical); border-color: var(--sev-critical); }
+  .chip[data-sev="high"].active     { background: var(--sev-high);     border-color: var(--sev-high); }
+  .chip[data-sev="medium"].active   { background: var(--sev-medium);   border-color: var(--sev-medium); }
+  .chip[data-sev="low"].active      { background: var(--sev-low);      border-color: var(--sev-low); }
+  .chip[data-sev="info"].active     { background: var(--sev-info);     border-color: var(--sev-info); }
+  .search {
+    flex: 1; min-width: 220px;
+    padding: .45rem .8rem; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--bg-elev); color: var(--text);
+    font-size: 13px; outline: none;
+  }
+  .search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+  /* ===== Findings ===== */
+  .finding {
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius);
+    margin-bottom: 1rem; box-shadow: var(--shadow-sm); overflow: hidden;
+    transition: box-shadow .15s ease, transform .1s ease;
+  }
+  .finding:hover { box-shadow: var(--shadow); }
+  .finding > summary {
+    list-style: none; cursor: pointer; padding: 1rem 1.25rem;
+    display: grid; grid-template-columns: auto 1fr auto; gap: 1rem; align-items: center;
+  }
+  .finding > summary::-webkit-details-marker { display: none; }
+  .finding > summary::after {
+    content: "›"; color: var(--text-mute); font-size: 1.4rem; line-height: 1;
+    transition: transform .2s ease; transform-origin: center;
+  }
+  .finding[open] > summary::after { transform: rotate(90deg); }
+  .finding[open] > summary { border-bottom: 1px solid var(--border); }
+
+  .finding-id {
+    font: 600 12px/1 ui-monospace, SFMono-Regular, monospace;
+    color: var(--text-mute);
+    background: var(--bg-soft);
+    padding: .35rem .55rem;
+    border-radius: var(--radius-sm);
+    letter-spacing: .04em;
+  }
+  .finding-title {
+    font-weight: 600; color: var(--text); font-size: 15px; line-height: 1.35;
+  }
+  .finding-meta {
+    color: var(--text-mute); font-size: 12.5px; margin-top: .15rem;
+    display: flex; flex-wrap: wrap; gap: .35rem .8rem; align-items: center;
+  }
+  .finding-meta .filepath {
+    font-family: ui-monospace, SFMono-Regular, monospace; color: var(--text-soft); font-size: 12px;
+  }
+
+  .finding-body { padding: .25rem 1.25rem 1.25rem; }
+  .finding-row { display: grid; grid-template-columns: 140px 1fr; gap: .6rem 1rem; padding: .55rem 0; border-top: 1px solid var(--border); }
+  .finding-row:first-child { border-top: 0; }
+  .finding-row .key {
+    color: var(--text-mute); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; font-weight: 600;
+    padding-top: 2px;
+  }
+  .finding-row .val { color: var(--text); font-size: 14.5px; line-height: 1.55; }
+  .finding-row .val code { background: var(--bg-soft); padding: 1px 5px; border-radius: 4px; font-size: 12.5px; border: 1px solid var(--border); }
+
+  /* ===== Severity / domain / confidence badges ===== */
+  .badge {
+    display: inline-flex; align-items: center; gap: .25rem;
+    padding: .15rem .55rem; border-radius: 999px;
+    font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+    border: 1px solid transparent;
+  }
+  .sev-critical { background: var(--sev-critical-bg); color: var(--sev-critical); border-color: color-mix(in srgb, var(--sev-critical) 35%, transparent); }
+  .sev-high     { background: var(--sev-high-bg);     color: var(--sev-high);     border-color: color-mix(in srgb, var(--sev-high) 35%, transparent); }
+  .sev-medium   { background: var(--sev-medium-bg);   color: var(--sev-medium);   border-color: color-mix(in srgb, var(--sev-medium) 35%, transparent); }
+  .sev-low      { background: var(--sev-low-bg);      color: var(--sev-low);      border-color: color-mix(in srgb, var(--sev-low) 35%, transparent); }
+  .sev-info     { background: var(--sev-info-bg);     color: var(--sev-info);     border-color: color-mix(in srgb, var(--sev-info) 35%, transparent); }
+  .badge-soft {
+    background: var(--bg-soft); color: var(--text-soft); border: 1px solid var(--border);
+    text-transform: none; letter-spacing: 0; font-weight: 600;
+  }
+  .badge-soft.confidence-confirmed { color: #047857; border-color: #a7f3d0; background: #ecfdf5; }
+  .badge-soft.confidence-likely    { color: #b45309; border-color: #fde68a; background: #fffbeb; }
+  .badge-soft.confidence-suspected { color: #6b7280; border-color: var(--border); background: var(--bg-soft); }
+  [data-theme="dark"] .badge-soft.confidence-confirmed { color: #6ee7b7; background: #062a1e; border-color: #064e3b; }
+  [data-theme="dark"] .badge-soft.confidence-likely    { color: #fcd34d; background: #2a1f0a; border-color: #422006; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .badge-soft.confidence-confirmed { color: #6ee7b7; background: #062a1e; border-color: #064e3b; }
+    :root:not([data-theme="light"]) .badge-soft.confidence-likely    { color: #fcd34d; background: #2a1f0a; border-color: #422006; }
+  }
+
+  /* ===== Code blocks ===== */
+  pre {
+    background: var(--code-bg); color: var(--code-text);
+    padding: .9rem 1rem; border-radius: var(--radius-sm); overflow-x: auto;
+    font-size: 12.5px; line-height: 1.55; margin: .35rem 0 0;
+    border: 1px solid color-mix(in srgb, var(--code-bg) 70%, var(--border));
+  }
+  pre code { background: transparent; padding: 0; border: 0; color: inherit; font-size: inherit; }
+
+  /* ===== Tables ===== */
+  .tbl {
+    width: 100%; border-collapse: separate; border-spacing: 0;
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden; box-shadow: var(--shadow-sm);
+    font-size: 14px;
+  }
+  .tbl th, .tbl td {
+    text-align: left; padding: .75rem 1rem; border-bottom: 1px solid var(--border);
+  }
+  .tbl tbody tr:last-child td { border-bottom: 0; }
+  .tbl th {
+    background: var(--bg-soft); font-weight: 600; font-size: 12px;
+    text-transform: uppercase; letter-spacing: .06em; color: var(--text-mute);
+  }
+  .tbl tbody tr:hover { background: var(--bg-soft); }
+  .tbl td code { background: var(--bg-soft); padding: 1px 5px; border-radius: 4px; font-size: 12.5px; border: 1px solid var(--border); }
+
+  /* ===== Themes section / roadmap ===== */
+  .roadmap-bucket {
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1rem 1.25rem 1.1rem; margin-bottom: 1rem; box-shadow: var(--shadow-sm);
+  }
+  .roadmap-bucket h3 {
+    margin: 0 0 .65rem; font-size: 1rem; display: flex; align-items: center; gap: .5rem;
+  }
+  .roadmap-bucket h3 .when {
+    font-size: 11px; padding: .15rem .55rem; border-radius: 999px;
+    background: var(--accent-soft); color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: .05em;
+  }
+
+  /* ===== Themes / questions ===== */
+  .theme {
+    border-left: 3px solid var(--accent); padding: .5rem .9rem;
+    background: var(--bg-elev); margin-bottom: .65rem; border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+  }
+  .theme-title { font-weight: 600; }
+  .theme-detail { color: var(--text-soft); margin-top: .15rem; font-size: 13.5px; }
+  .question {
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: .7rem 1rem; margin-bottom: .55rem;
+  }
+  .question .q-text { font-weight: 600; }
+  .question .q-meta { color: var(--text-mute); font-size: 12.5px; margin-top: .25rem; }
+
+  /* ===== Footer ===== */
+  footer {
+    padding: 2rem 0 3rem; color: var(--text-mute); font-size: 12px; text-align: center;
+  }
+  footer .brand { color: var(--text-soft); font-weight: 600; }
+
+  /* ===== TOC nav ===== */
+  .toc {
+    display: flex; gap: .25rem; flex-wrap: wrap;
+    border-top: 1px solid var(--border);
+    padding: .6rem 0;
+    overflow-x: auto;
+    margin-bottom: -1px;
+  }
+  .toc a {
+    color: var(--text-soft); padding: .25rem .65rem; border-radius: var(--radius-sm);
+    font-size: 13px; white-space: nowrap;
+  }
+  .toc a:hover { background: var(--bg-soft); color: var(--text); text-decoration: none; }
+
+  /* ===== Print ===== */
+  @media print {
+    body { background: white; color: black; }
+    .topbar, .filterbar, .theme-toggle, .toc { display: none; }
+    .finding { break-inside: avoid; box-shadow: none; border-color: #ccc; }
+    .finding > summary::after { display: none; }
+    .finding > summary { border-bottom: 1px solid #ccc; }
+    details:not([open]) > *:not(summary) { display: revert; }
+    pre { background: #f4f4f4 !important; color: #111 !important; }
+  }
+
+  /* ===== Anchor offset for sticky topbar ===== */
+  :target { scroll-margin-top: 80px; }
+</style>
+</head>
+<body data-theme="">
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="logo">
+      <span class="logo-mark" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </span>
+      Security Report
+    </div>
+    <span class="topbar-meta">Acme Orders API · 2026-05-12 14:30</span>
+    <button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle theme">Toggle theme</button>
+  </div>
+  <div class="container">
+    <nav class="toc" aria-label="Section navigation">
+      <a href="#overview">Overview</a>
+      <a href="#summary">Executive summary</a>
+      <a href="#findings">Findings</a>
+      <a href="#themes">Themes</a>
+      <a href="#roadmap">Roadmap</a>
+      <a href="#coverage">Coverage</a>
+      <a href="#questions">Open questions</a>
+      <a href="#posture">Posture</a>
+    </nav>
+  </div>
+</div>
+
+<header class="container hero" id="overview">
+  <h1>Acme Orders API</h1>
+  <p class="subtitle">Security audit report · generated Tuesday, May 12 2026 at 14:30 UTC+3</p>
+
+  <div class="posture">
+    <span class="grade-pill grade-F">F</span>
+    <span class="grade-label">Overall posture: <strong>Critical issues present</strong></span>
+  </div>
+
+  <div class="hero-grid">
+    <div class="meta-card">
+      <div class="label">Scope</div>
+      <div class="value mono">C:/work/acme/orders-api/src</div>
+    </div>
+    <div class="meta-card">
+      <div class="label">Stack</div>
+      <div class="value">TypeScript 5.4 · Node 20 · Express 4 · PostgreSQL 16</div>
+    </div>
+    <div class="meta-card">
+      <div class="label">Files scanned</div>
+      <div class="value">438</div>
+    </div>
+    <div class="meta-card">
+      <div class="label">Dependencies</div>
+      <div class="value">npm: 1 critical, 4 high, 12 moderate, 31 low</div>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+
+  <section id="summary" aria-labelledby="h-summary">
+    <h2 id="h-summary">Executive summary</h2>
+    <p class="section-intro">What the lead reviewer wants you to walk away knowing.</p>
+    <div class="exec">
+      <p>The audit found two critical issues that block release: a hard-coded AWS access key in tracked source (F-001), and a SQL-injection vector on /api/orders behind a normal-user authentication gate (F-002). Authorization is the dominant systemic weakness — four endpoints lack ownership checks (F-003 and three siblings). Dependency posture is moderate: 1 critical and 4 high advisories, all in directly imported packages. Header and cookie configuration is mostly in place but has a `Secure`-on-prod-only flag that does not match the deployed environments. Fix the two criticals in this PR; the rest fits in one sprint.</p>
+    </div>
+  </section>
+
+  <section id="risk" aria-labelledby="h-risk">
+    <h2 id="h-risk">Risk overview</h2>
+    <p class="section-intro">Findings by severity. Click a chip in the next section to filter.</p>
+    <div class="stat-grid">
+      <div class="stat crit"><div class="stat-label">Critical</div><div class="stat-value">2</div><div class="stat-sub">2 confirmed</div></div>
+      <div class="stat high"><div class="stat-label">High</div><div class="stat-value">2</div><div class="stat-sub">2 confirmed</div></div>
+      <div class="stat med"><div class="stat-label">Medium</div><div class="stat-value">1</div><div class="stat-sub">1 confirmed</div></div>
+      <div class="stat low"><div class="stat-label">Low</div><div class="stat-value">1</div><div class="stat-sub">1 confirmed</div></div>
+      <div class="stat info"><div class="stat-label">Info</div><div class="stat-value">1</div><div class="stat-sub">observations</div></div>
+    </div>
+  </section>
+
+  <section id="findings" aria-labelledby="h-findings">
+    <h2 id="h-findings">Findings <span class="h2-count">7 total</span></h2>
+    <p class="section-intro">Each finding is anchored to a specific file and line. Use the filters to narrow the list.</p>
+
+    <div class="filterbar" role="toolbar" aria-label="Findings filters">
+      <button type="button" class="chip active" data-filter="all">All</button>
+      <button type="button" class="chip" data-sev="critical" data-filter="critical">Critical · 2</button>
+      <button type="button" class="chip" data-sev="high"     data-filter="high">High · 2</button>
+      <button type="button" class="chip" data-sev="medium"   data-filter="medium">Medium · 1</button>
+      <button type="button" class="chip" data-sev="low"      data-filter="low">Low · 1</button>
+      <button type="button" class="chip" data-sev="info"     data-filter="info">Info · 1</button>
+      <input type="search" class="search" id="findingSearch" placeholder="Search findings by title, file, CWE…">
+    </div>
+
+    <div id="findingsList">
+      <!--
+        FINDINGS BLOCK
+        For each finding, emit the following template, with all fields HTML-escaped:
+      -->
+      
+      <details class="finding" data-sev="critical" data-domain="secrets" data-search="aws access key hard-coded src/config/aws.ts cwe-798 a02 secrets" id="F-001">
+        <summary>
+          <span class="finding-id">F-001</span>
+          <div>
+            <div class="finding-title">AWS access key hard-coded in src/config/aws.ts</div>
+            <div class="finding-meta">
+              <span class="badge sev-critical">critical</span>
+              <span class="badge badge-soft">secrets</span>
+              <span class="badge badge-soft confidence-confirmed">confirmed</span>
+              <span class="filepath">src/config/aws.ts:14</span>
+              <span class="badge badge-soft"><a href="https://cwe.mitre.org/data/definitions/798.html" target="_blank" rel="noopener">CWE-798</a></span>
+              <span class="badge badge-soft">A02:2021</span>
+            </div>
+          </div>
+        </summary>
+        <div class="finding-body">
+          <div class="finding-row"><div class="key">Issue</div><div class="val">A live-looking AWS access key ID and secret are committed in tracked source, not loaded from environment variables. Anyone with read access to the repository has these credentials.</div></div>
+          <div class="finding-row"><div class="key">Evidence</div><div class="val"><pre><code>export const awsConfig = {
+  region: &quot;us-east-1&quot;,
+  accessKeyId: &quot;AKIA****************&quot;,     // redacted
+  secretAccessKey: &quot;wJalr****************&quot;,// redacted
+};</code></pre></div></div>
+          <div class="finding-row"><div class="key">Impact</div><div class="val">A reader of the repository can authenticate to the production AWS account. Depending on the IAM policy attached, this ranges from data exfiltration to full account takeover.</div></div>
+          <div class="finding-row"><div class="key">Fix</div><div class="val">Rotate the key in IAM immediately. Remove the literal from source and load via `process.env.AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`. Add `src/config/aws.ts` to `.gitignore` if it must hold secrets, or replace with an IAM role on the host. Note: the key remains compromised in git history — rotation is mandatory, history rewriting is optional.</div></div>
+          <div class="finding-row"><div class="key">Justification</div><div class="val">Confirmed live credential in tracked source on a public-facing repo branch.</div></div>
+          <div class="finding-row"><div class="key">References</div><div class="val">OWASP Secrets Management Cheat Sheet · CWE-798 · AWS IAM key rotation runbook</div></div>
+        </div>
+      </details>
+      
+      <details class="finding" data-sev="critical" data-domain="injection" data-search="sql injection /api/orders search.ts cwe-89 a03 injection sequelize" id="F-002">
+        <summary>
+          <span class="finding-id">F-002</span>
+          <div>
+            <div class="finding-title">SQL injection in /api/orders search filter</div>
+            <div class="finding-meta">
+              <span class="badge sev-critical">critical</span>
+              <span class="badge badge-soft">injection</span>
+              <span class="badge badge-soft confidence-confirmed">confirmed</span>
+              <span class="filepath">src/api/orders/search.ts:38</span>
+              <span class="badge badge-soft"><a href="https://cwe.mitre.org/data/definitions/89.html" target="_blank" rel="noopener">CWE-89</a></span>
+              <span class="badge badge-soft">A03:2021</span>
+            </div>
+          </div>
+        </summary>
+        <div class="finding-body">
+          <div class="finding-row"><div class="key">Issue</div><div class="val">The `q` query parameter is concatenated into a raw SQL string and passed to `sequelize.query` without parameterisation. The route is authenticated but available to any standard user.</div></div>
+          <div class="finding-row"><div class="key">Evidence</div><div class="val"><pre><code>router.get(&quot;/api/orders&quot;, requireAuth, async (req, res) =&gt; {
+  const q = req.query.q;
+  const sql = `SELECT * FROM orders WHERE customer_name LIKE &#39;%${q}%&#39;`;
+  const rows = await sequelize.query(sql);
+  res.json(rows);
+});</code></pre></div></div>
+          <div class="finding-row"><div class="key">Impact</div><div class="val">Any authenticated user can read or modify arbitrary rows in the `orders` table (and any table reachable from the same DB user). Time-based blind SQLi works through the LIKE clause; UNION SELECT is reachable.</div></div>
+          <div class="finding-row"><div class="key">Fix</div><div class="val">Replace with parameterised query: `sequelize.query(&quot;SELECT ... WHERE customer_name LIKE :q&quot;, { replacements: { q: `%${q}%` } })`. Audit the other 4 controllers using `sequelize.query` (see theme T-001).</div></div>
+          <div class="finding-row"><div class="key">Justification</div><div class="val">Direct user-controlled string interpolated into SQL; auth gate is present but does not constrain the input.</div></div>
+          <div class="finding-row"><div class="key">References</div><div class="val">OWASP SQL Injection Prevention Cheat Sheet · CWE-89</div></div>
+        </div>
+      </details>
+      
+      <details class="finding" data-sev="high" data-domain="auth" data-search="idor users id ownership usercontroller.ts cwe-639 a01 auth" id="F-003">
+        <summary>
+          <span class="finding-id">F-003</span>
+          <div>
+            <div class="finding-title">IDOR on GET /api/users/:id — no ownership check</div>
+            <div class="finding-meta">
+              <span class="badge sev-high">high</span>
+              <span class="badge badge-soft">auth</span>
+              <span class="badge badge-soft confidence-confirmed">confirmed</span>
+              <span class="filepath">src/controllers/UserController.ts:42</span>
+              <span class="badge badge-soft"><a href="https://cwe.mitre.org/data/definitions/639.html" target="_blank" rel="noopener">CWE-639</a></span>
+              <span class="badge badge-soft">A01:2021</span>
+            </div>
+          </div>
+        </summary>
+        <div class="finding-body">
+          <div class="finding-row"><div class="key">Issue</div><div class="val">The handler loads `User.findByPk(req.params.id)` and returns the record. There is no check that the requesting user is the same user, an admin, or otherwise authorized to read this profile.</div></div>
+          <div class="finding-row"><div class="key">Evidence</div><div class="val"><pre><code>router.get(&quot;/api/users/:id&quot;, requireAuth, async (req, res) =&gt; {
+  const user = await User.findByPk(req.params.id);
+  if (!user) return res.status(404).end();
+  res.json(user);
+});</code></pre></div></div>
+          <div class="finding-row"><div class="key">Impact</div><div class="val">Any authenticated user can enumerate sequential IDs and read every other user&#39;s profile, including the `email`, `phone`, and `address` columns returned in the JSON response.</div></div>
+          <div class="finding-row"><div class="key">Fix</div><div class="val">Either restrict to self (`if (req.user.id !== Number(req.params.id) &amp;&amp; req.user.role !== &quot;admin&quot;) return res.status(403).end();`) or load with the ownership predicate in the query.</div></div>
+          <div class="finding-row"><div class="key">Justification</div><div class="val">Confirmed IDOR exposing PII fields; authenticated but unprivileged actors are sufficient.</div></div>
+          <div class="finding-row"><div class="key">References</div><div class="val">OWASP IDOR Prevention · CWE-639</div></div>
+        </div>
+      </details>
+      
+      <details class="finding" data-sev="high" data-domain="config" data-search="tls verification disabled rejectunauthorized payments client.ts cwe-295 a02 config" id="F-004">
+        <summary>
+          <span class="finding-id">F-004</span>
+          <div>
+            <div class="finding-title">TLS verification disabled in outbound payments client</div>
+            <div class="finding-meta">
+              <span class="badge sev-high">high</span>
+              <span class="badge badge-soft">config</span>
+              <span class="badge badge-soft confidence-confirmed">confirmed</span>
+              <span class="filepath">src/integrations/payments/client.ts:9</span>
+              <span class="badge badge-soft"><a href="https://cwe.mitre.org/data/definitions/295.html" target="_blank" rel="noopener">CWE-295</a></span>
+              <span class="badge badge-soft">A02:2021</span>
+            </div>
+          </div>
+        </summary>
+        <div class="finding-body">
+          <div class="finding-row"><div class="key">Issue</div><div class="val">The payments service HTTP client is constructed with `rejectUnauthorized: false`, disabling certificate validation for all outbound requests to the payments API.</div></div>
+          <div class="finding-row"><div class="key">Evidence</div><div class="val"><pre><code>export const paymentsClient = axios.create({
+  baseURL: process.env.PAYMENTS_API_URL,
+  httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+});</code></pre></div></div>
+          <div class="finding-row"><div class="key">Impact</div><div class="val">An attacker positioned between the app and the payments API can present any TLS certificate and intercept or modify payment requests in flight, including amount, recipient, and authorization tokens.</div></div>
+          <div class="finding-row"><div class="key">Fix</div><div class="val">Remove `rejectUnauthorized: false`. If a private CA is required (rare), pass `ca: fs.readFileSync(...)` explicitly. Audit the rest of `src/integrations/**` — see theme T-002.</div></div>
+          <div class="finding-row"><div class="key">Justification</div><div class="val">Disables a security control entirely on a money-handling path.</div></div>
+          <div class="finding-row"><div class="key">References</div><div class="val">CWE-295 · Node TLS docs · OWASP Transport Layer Protection Cheat Sheet</div></div>
+        </div>
+      </details>
+      
+      <details class="finding" data-sev="medium" data-domain="config" data-search="cookie httponly samesite session.ts cwe-1004 a05 config" id="F-005">
+        <summary>
+          <span class="finding-id">F-005</span>
+          <div>
+            <div class="finding-title">Auth cookie set without HttpOnly and without SameSite</div>
+            <div class="finding-meta">
+              <span class="badge sev-medium">medium</span>
+              <span class="badge badge-soft">config</span>
+              <span class="badge badge-soft confidence-confirmed">confirmed</span>
+              <span class="filepath">src/middleware/session.ts:27</span>
+              <span class="badge badge-soft"><a href="https://cwe.mitre.org/data/definitions/1004.html" target="_blank" rel="noopener">CWE-1004</a></span>
+              <span class="badge badge-soft">A05:2021</span>
+            </div>
+          </div>
+        </summary>
+        <div class="finding-body">
+          <div class="finding-row"><div class="key">Issue</div><div class="val">The session cookie is set without the `HttpOnly` flag and without an explicit `SameSite` directive. The `Secure` flag is conditional on `NODE_ENV === &quot;production&quot;`, but the deployed staging environment is not `production` and is internet-reachable.</div></div>
+          <div class="finding-row"><div class="key">Evidence</div><div class="val"><pre><code>res.cookie(&quot;sid&quot;, sessionId, {
+  secure: process.env.NODE_ENV === &quot;production&quot;,
+  maxAge: 1000 * 60 * 60 * 24 * 30,
+});</code></pre></div></div>
+          <div class="finding-row"><div class="key">Impact</div><div class="val">XSS anywhere in the SPA can read the cookie and exfiltrate the session. The missing `SameSite` allows cross-site requests to attach the cookie, enabling CSRF in browsers that default to None.</div></div>
+          <div class="finding-row"><div class="key">Fix</div><div class="val">Set `httpOnly: true` and `sameSite: &quot;lax&quot;` (or `strict` if no cross-site flows). Make `secure: true` unconditional and use a separate dev-only override file rather than runtime branching.</div></div>
+          <div class="finding-row"><div class="key">Justification</div><div class="val">Defense-in-depth — exploitation requires a second bug (XSS or CSRF), but those are cheap to find.</div></div>
+          <div class="finding-row"><div class="key">References</div><div class="val">OWASP Session Management Cheat Sheet · MDN: Set-Cookie</div></div>
+        </div>
+      </details>
+      
+      <details class="finding" data-sev="low" data-domain="config" data-search="csp frame-ancestors headers.ts cwe-1021 a05 config helmet" id="F-006">
+        <summary>
+          <span class="finding-id">F-006</span>
+          <div>
+            <div class="finding-title">CSP missing `frame-ancestors`; relies only on X-Frame-Options</div>
+            <div class="finding-meta">
+              <span class="badge sev-low">low</span>
+              <span class="badge badge-soft">config</span>
+              <span class="badge badge-soft confidence-confirmed">confirmed</span>
+              <span class="filepath">src/middleware/headers.ts:11</span>
+              <span class="badge badge-soft"><a href="https://cwe.mitre.org/data/definitions/1021.html" target="_blank" rel="noopener">CWE-1021</a></span>
+              <span class="badge badge-soft">A05:2021</span>
+            </div>
+          </div>
+        </summary>
+        <div class="finding-body">
+          <div class="finding-row"><div class="key">Issue</div><div class="val">CSP is configured but does not include a `frame-ancestors` directive. `X-Frame-Options: DENY` is set as a fallback, which works for modern browsers but is the legacy mechanism.</div></div>
+          <div class="finding-row"><div class="key">Evidence</div><div class="val"><pre><code>app.use(helmet.contentSecurityPolicy({
+  directives: { defaultSrc: [&quot;&#39;self&#39;&quot;], scriptSrc: [&quot;&#39;self&#39;&quot;] }
+}));
+app.use(helmet.frameguard({ action: &quot;deny&quot; }));</code></pre></div></div>
+          <div class="finding-row"><div class="key">Impact</div><div class="val">A spec-compliant CSP should include `frame-ancestors`. Current behaviour is correct for now but is implicit on a deprecated header.</div></div>
+          <div class="finding-row"><div class="key">Fix</div><div class="val">Add `frameAncestors: [&quot;\&#39;none\&#39;&quot;]` to the helmet CSP directives.</div></div>
+          <div class="finding-row"><div class="key">Justification</div><div class="val">Hardening gap; not exploitable in current code.</div></div>
+          
+        </div>
+      </details>
+      
+      <details class="finding" data-sev="info" data-domain="design" data-search="custom crypto wrapper utils crypto.ts design info" id="F-007">
+        <summary>
+          <span class="finding-id">F-007</span>
+          <div>
+            <div class="finding-title">Custom crypto wrapper present in src/utils/crypto.ts</div>
+            <div class="finding-meta">
+              <span class="badge sev-info">info</span>
+              <span class="badge badge-soft">design</span>
+              <span class="badge badge-soft confidence-confirmed">confirmed</span>
+              <span class="filepath">src/utils/crypto.ts:1</span>
+              
+              
+            </div>
+          </div>
+        </summary>
+        <div class="finding-body">
+          <div class="finding-row"><div class="key">Issue</div><div class="val">The codebase contains a custom AES-GCM wrapper around `node:crypto`. The implementation appears correct (random IV per message, AEAD tag check) but custom crypto warrants a peer review on principle.</div></div>
+          <div class="finding-row"><div class="key">Evidence</div><div class="val"><pre><code>export function encrypt(plain, key) {
+  const iv = randomBytes(12);
+  const cipher = createCipheriv(&quot;aes-256-gcm&quot;, key, iv);
+  ...
+}</code></pre></div></div>
+          <div class="finding-row"><div class="key">Impact</div><div class="val">No exploit identified. Flagged for visibility — refactors of this file should be reviewed by security.</div></div>
+          <div class="finding-row"><div class="key">Fix</div><div class="val">Annotate the file with a `// security:reviewed YYYY-MM-DD by NAME` marker; route future PRs through a security review.</div></div>
+          <div class="finding-row"><div class="key">Justification</div><div class="val">Informational — observation, not a vulnerability.</div></div>
+          
+        </div>
+      </details>
+      
+      <!--
+        If there are zero findings, emit:
+        <div class="exec"><p>No findings produced. Areas swept are listed in the Coverage section.</p></div>
+      -->
+    </div>
+  </section>
+
+  <section id="themes" aria-labelledby="h-themes">
+    <h2 id="h-themes">Themes</h2>
+    <p class="section-intro">Underlying patterns that explain why multiple findings exist.</p>
+    
+    <div class="theme">
+      <div class="theme-title">T-001 · Raw `sequelize.query` used in 5 controllers</div>
+      <div class="theme-detail">F-002 plus four siblings in src/api/{customers, products, invoices, refunds}/search.ts use the same pattern. Recommend a shared `safeQuery()` helper and an ESLint rule banning literal-template SQL.</div>
+    </div>
+    
+    <div class="theme">
+      <div class="theme-title">T-002 · TLS verification disabled in two outbound clients</div>
+      <div class="theme-detail">F-004 (payments) and a similar pattern in `src/integrations/inventory/client.ts:11`. Centralise outbound HTTP via a single hardened factory and forbid `rejectUnauthorized: false` via lint.</div>
+    </div>
+    
+    <div class="theme">
+      <div class="theme-title">T-003 · `process.env.NODE_ENV === &quot;production&quot;` used as a security gate</div>
+      <div class="theme-detail">Cookies, debug-error pages, and CORS all branch on this. Staging is not production but is internet-reachable — controls degrade silently there. Replace with explicit `SECURITY_PROFILE=strict|dev` resolved at boot.</div>
+    </div>
+    
+    <!-- If no themes: <div class="theme"><div class="theme-detail">No systemic patterns observed.</div></div> -->
+  </section>
+
+  <section id="roadmap" aria-labelledby="h-roadmap">
+    <h2 id="h-roadmap">Remediation roadmap</h2>
+    <p class="section-intro">What to fix and when. Effort: S (≤1d), M (≤1 sprint), L (multi-sprint).</p>
+
+    <div class="roadmap-bucket">
+      <h3>Now <span class="when">this PR</span></h3>
+      <table class="tbl">
+        <thead><tr><th>ID</th><th>Title</th><th>Effort</th><th>Owner</th></tr></thead>
+        <tbody>
+          
+          <tr><td><a href="#F-001"><code>F-001</code></a></td><td>Rotate AWS key, remove from source</td><td>S</td><td>devops</td></tr>
+          
+          <tr><td><a href="#F-002"><code>F-002</code></a></td><td>Parameterise /api/orders search SQL</td><td>S</td><td>dev</td></tr>
+          
+          <!-- if empty: <tr><td colspan="4" style="color: var(--text-mute);">Nothing critical right now.</td></tr> -->
+        </tbody>
+      </table>
+    </div>
+
+    <div class="roadmap-bucket">
+      <h3>Soon <span class="when">this sprint</span></h3>
+      <table class="tbl">
+        <thead><tr><th>ID</th><th>Title</th><th>Effort</th><th>Owner</th></tr></thead>
+        <tbody>
+          
+          <tr><td><a href="#F-003"><code>F-003</code></a></td><td>Add ownership checks to /api/users/:id and siblings</td><td>M</td><td>dev</td></tr>
+          
+          <tr><td><a href="#F-004"><code>F-004</code></a></td><td>Re-enable TLS verification on payments client</td><td>S</td><td>dev</td></tr>
+          
+          <tr><td><a href="#F-005"><code>F-005</code></a></td><td>Tighten session cookie flags</td><td>S</td><td>dev</td></tr>
+          
+        </tbody>
+      </table>
+    </div>
+
+    <div class="roadmap-bucket">
+      <h3>Planned <span class="when">this quarter</span></h3>
+      <table class="tbl">
+        <thead><tr><th>ID</th><th>Title</th><th>Effort</th><th>Owner</th></tr></thead>
+        <tbody>
+          
+          <tr><td><a href="#F-006"><code>F-006</code></a></td><td>Add CSP `frame-ancestors`</td><td>S</td><td>dev</td></tr>
+          
+          <tr><td><a href="#F-007"><code>F-007</code></a></td><td>Tag custom-crypto wrapper for security review</td><td>S</td><td>security</td></tr>
+          
+          <tr><td><a href="#T-001"><code>T-001</code></a></td><td>Introduce safeQuery() helper + ESLint rule</td><td>M</td><td>dev</td></tr>
+          
+          <tr><td><a href="#T-003"><code>T-003</code></a></td><td>Replace NODE_ENV gates with SECURITY_PROFILE</td><td>M</td><td>dev</td></tr>
+          
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="coverage" aria-labelledby="h-coverage">
+    <h2 id="h-coverage">Coverage</h2>
+    <p class="section-intro">Where the scanners reached, and where they didn't. Gaps are follow-up work, not bugs.</p>
+
+    <h3 style="margin: 1.25rem 0 .65rem;">Surface inventory</h3>
+    <table class="tbl">
+      <thead><tr><th>Surface</th><th>File count</th><th>Touched by scanners</th></tr></thead>
+      <tbody>
+        
+        <tr><td>HTTP endpoints</td><td>47</td><td>yes (scanner-auth, scanner-injection)</td></tr>
+        
+        <tr><td>GraphQL resolvers</td><td>0</td><td>n/a</td></tr>
+        
+        <tr><td>Message-queue workers</td><td>6</td><td>partial (2 of 6)</td></tr>
+        
+        <tr><td>Helm / k8s manifests</td><td>14</td><td>NO — gap</td></tr>
+        
+        <tr><td>Terraform</td><td>0</td><td>n/a</td></tr>
+        
+        <tr><td>Custom crypto utils</td><td>1</td><td>yes (scanner-config)</td></tr>
+        
+        <tr><td>Configuration files</td><td>23</td><td>yes (scanner-secrets, scanner-config)</td></tr>
+        
+      </tbody>
+    </table>
+
+    <h3 style="margin: 1.5rem 0 .65rem;">Gaps</h3>
+    <table class="tbl">
+      <thead><tr><th>Priority</th><th>Gap</th><th>Suggested action</th></tr></thead>
+      <tbody>
+        
+        <tr><td><span class="badge badge-soft">next-run</span></td><td>Helm chart values not reviewed</td><td>Re-run `/security-scan helm/` after this PR ships</td></tr>
+        
+        <tr><td><span class="badge badge-soft">follow-up</span></td><td>4 of 6 background workers not inspected for taint flow</td><td>Add `src/workers/**` to the next scan scope</td></tr>
+        
+        <tr><td><span class="badge badge-soft">nice-to-have</span></td><td>No GraphQL surface — confirm none is planned</td><td>No action needed unless the roadmap adds GraphQL</td></tr>
+        
+        <!-- if empty: <tr><td colspan="3" style="color: var(--text-mute);">No coverage gaps.</td></tr> -->
+      </tbody>
+    </table>
+  </section>
+
+  <section id="questions" aria-labelledby="h-questions">
+    <h2 id="h-questions">Open questions <span class="h2-count">2</span></h2>
+    <p class="section-intro">Resolve these with the listed owner before the next scan.</p>
+    
+    <div class="question">
+      <div class="q-text">Is /api/public/feed intentionally unauthenticated?</div>
+      <div class="q-meta">Context: <code>src/routes/public.ts:8</code> · Asked by: scanner-auth · Owner: product BA</div>
+    </div>
+    
+    <div class="question">
+      <div class="q-text">Is the `inventory` integration TLS endpoint a private internal service?</div>
+      <div class="q-meta">Context: <code>src/integrations/inventory/client.ts:11</code> · Asked by: scanner-config · Owner: platform team</div>
+    </div>
+    
+    <!-- if empty: <div class="exec"><p>No open questions — every ambiguity was resolved during the audit.</p></div> -->
+  </section>
+
+  <section id="posture" aria-labelledby="h-posture">
+    <h2 id="h-posture">Posture &amp; tooling recommendations</h2>
+    <p class="section-intro">Process changes that reduce future risk.</p>
+    <table class="tbl">
+      <thead><tr><th>Recommendation</th><th>Why</th></tr></thead>
+      <tbody>
+        
+        <tr><td>Enable Dependabot for npm and Docker</td><td>No `.github/dependabot.yml` present; 17 advisories aged &gt; 6 months</td></tr>
+        
+        <tr><td>Add `SECURITY.md` with disclosure policy</td><td>No public disclosure path; reporters currently have nowhere to send findings</td></tr>
+        
+        <tr><td>Add a `gitleaks` pre-commit hook</td><td>F-001 would have been caught locally before push</td></tr>
+        
+        <tr><td>Add `npm audit --omit=dev --audit-level=high` to CI</td><td>Currently no automated check for vulnerable packages on PR</td></tr>
+        
+      </tbody>
+    </table>
+  </section>
+
+  <section id="dismissals" aria-labelledby="h-dismissals">
+    <h2 id="h-dismissals">False positives dismissed <span class="h2-count">14</span></h2>
+    <p class="section-intro">These were checked and ruled out. Listed so readers can audit the audit.</p>
+    <table class="tbl">
+      <thead><tr><th>Original severity</th><th>Title</th><th>Source</th><th>Reason</th></tr></thead>
+      <tbody>
+        
+        <tr><td><span class="badge sev-critical">critical</span></td><td>AWS key in tests/fixtures/aws.json</td><td>scanner-secrets</td><td>Value is `AKIAIOSFODNN7EXAMPLE` — documented AWS placeholder</td></tr>
+        
+        <tr><td><span class="badge sev-high">high</span></td><td>Missing auth on GET /healthz</td><td>scanner-auth</td><td>Intentionally public liveness probe</td></tr>
+        
+        <tr><td><span class="badge sev-high">high</span></td><td>eval() in scripts/build/compile.js</td><td>scanner-injection</td><td>Build-time only, runs on a literal template, never sees runtime input</td></tr>
+        
+        <tr><td><span class="badge sev-medium">medium</span></td><td>MD5 usage in src/cache/etag.ts</td><td>scanner-config</td><td>Used as ETag, no security purpose</td></tr>
+        
+        <tr><td><span class="badge sev-medium">medium</span></td><td>11 `Math.random()` calls in src/ui/animations/*</td><td>scanner-config</td><td>Visual jitter, not security tokens</td></tr>
+        
+      </tbody>
+    </table>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <span class="brand">security-scan</span> · generated Tuesday, May 12 2026 at 14:30 UTC+3 ·
+    findings are advisory and require human verification before remediation.
+  </div>
+</footer>
+
+<script>
+(function () {
+  // Theme toggle
+  var btn = document.getElementById('themeToggle');
+  var root = document.documentElement;
+  var stored = null;
+  try { stored = localStorage.getItem('secscan-theme'); } catch (_) {}
+  if (stored === 'light' || stored === 'dark') document.body.dataset.theme = stored;
+  btn.addEventListener('click', function () {
+    var cur = document.body.dataset.theme;
+    var media = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    var effective = cur || media;
+    var next = effective === 'dark' ? 'light' : 'dark';
+    document.body.dataset.theme = next;
+    try { localStorage.setItem('secscan-theme', next); } catch (_) {}
+  });
+
+  // Filter chips
+  var chips = document.querySelectorAll('.chip[data-filter]');
+  var findings = document.querySelectorAll('#findingsList .finding');
+  var searchInput = document.getElementById('findingSearch');
+  var currentFilter = 'all';
+  var currentSearch = '';
+
+  function applyFilters() {
+    findings.forEach(function (el) {
+      var sev = el.dataset.sev;
+      var blob = (el.dataset.search || '').toLowerCase();
+      var matchSev = currentFilter === 'all' || sev === currentFilter;
+      var matchSearch = !currentSearch || blob.indexOf(currentSearch) !== -1;
+      el.style.display = (matchSev && matchSearch) ? '' : 'none';
+    });
+  }
+  chips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      chips.forEach(function (c) { c.classList.remove('active'); });
+      chip.classList.add('active');
+      currentFilter = chip.dataset.filter;
+      applyFilters();
+    });
+  });
+  if (searchInput) {
+    searchInput.addEventListener('input', function () {
+      currentSearch = searchInput.value.trim().toLowerCase();
+      applyFilters();
+    });
+  }
+
+  // Expand-all when Alt+E
+  document.addEventListener('keydown', function (e) {
+    if (e.altKey && (e.key === 'e' || e.key === 'E')) {
+      e.preventDefault();
+      var anyClosed = Array.prototype.some.call(findings, function (f) { return !f.open; });
+      findings.forEach(function (f) { f.open = anyClosed; });
+    }
+  });
+
+  // Open a finding when its anchor is the URL hash
+  if (location.hash) {
+    var target = document.querySelector(location.hash);
+    if (target && target.tagName === 'DETAILS') target.open = true;
+  }
+})();
+</script>
+
+</body>
+</html>

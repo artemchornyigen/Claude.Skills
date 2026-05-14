@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr diff:*)",
+      "Bash(gh issue view:*)",
+      "Bash(az boards work-item show:*)",
+      "Bash(az repos pr show:*)",
+      "Bash(npm test:*)",
+      "Bash(npm run test:*)",
+      "Bash(npx playwright test:*)",
+      "Bash(dotnet test:*)",
+      "Bash(pytest:*)",
+      "Bash(curl -s:*)"
+    ],
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Bash(git push --force:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(*DROP TABLE*)",
+      "Write(**/.env)",
+      "Write(**/.env.*)"
+    ]
+  },
+  "env": {
+    "PROJECT_UNDER_TEST": "",
+    "TEST_PROJECT_PATH": "",
+    "TEST_CASES_DIR": "",
+    "APP_BASE_URL": "",
+    "API_BASE_URL": ""
+  }
+}
